@@ -4,6 +4,7 @@ class Point {
   final double latitude;
   final double longitude;
   final String name;
+  final int id;
   final Quiz quiz;
 
   Point({
@@ -11,6 +12,7 @@ class Point {
     required this.longitude,
     required this.name,
     required this.quiz,
+    required this.id,
   });
 
   // تحويل إلى JSON (للتخزين أو الإرسال)
@@ -18,6 +20,7 @@ class Point {
     'latitude': latitude,
     'longitude': longitude,
     'name': name,
+    "id": id,
     'quiz': quiz.toJson(),
   };
 
@@ -26,6 +29,7 @@ class Point {
     latitude: json['latitude'],
     longitude: json['longitude'],
     name: json['name'],
+    id: json['id'],
     quiz: Quiz.fromJson(json['quiz']),
   );
 }
