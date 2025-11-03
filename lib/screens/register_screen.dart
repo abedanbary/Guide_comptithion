@@ -30,7 +30,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   void _register() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // إخفاء لوحة المفاتيح
     FocusScope.of(context).unfocus();
 
     setState(() => isLoading = true);
@@ -49,7 +48,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (user != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('✅ تم التسجيل بنجاح!'),
+          content: Text('Account created successfully!'),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
         ),
@@ -58,7 +57,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('❌ فشل التسجيل. حاول مرة أخرى'),
+          content: Text('Registration failed. Please try again.'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),
@@ -69,231 +68,304 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('إنشاء حساب جديد'),
-        centerTitle: true,
-        elevation: 0,
-      ),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // أيقونة أعلى الشاشة
-                Icon(
-                  Icons.person_add_rounded,
-                  size: 80,
-                  color: Theme.of(context).primaryColor,
-                ),
-                const SizedBox(height: 16),
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 40),
 
-                // عنوان ترحيبي
-                Text(
-                  'انضم إلينا الآن',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'أنشئ حسابك وابدأ رحلتك التعليمية',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-                ),
-                const SizedBox(height: 32),
-
-                // حقل اسم المستخدم
-                TextFormField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(
-                    labelText: 'اسم المستخدم',
-                    prefixIcon: const Icon(Icons.person_outline),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                  textInputAction: TextInputAction.next,
-                  validator: (val) {
-                    if (val == null || val.isEmpty) {
-                      return 'الرجاء إدخال اسم المستخدم';
-                    }
-                    if (val.length < 3) {
-                      return 'اسم المستخدم يجب أن يكون 3 أحرف على الأقل';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // حقل البريد الإلكتروني
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'البريد الإلكتروني',
-                    prefixIcon: const Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                  textInputAction: TextInputAction.next,
-                  validator: (val) {
-                    if (val == null || val.isEmpty) {
-                      return 'الرجاء إدخال البريد الإلكتروني';
-                    }
-                    // تحقق من صيغة البريد الإلكتروني
-                    final emailRegex = RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    );
-                    if (!emailRegex.hasMatch(val)) {
-                      return 'الرجاء إدخال بريد إلكتروني صحيح';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // حقل كلمة المرور
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'كلمة المرور',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
-                      ),
-                      onPressed: () {
-                        setState(() => _obscurePassword = !_obscurePassword);
-                      },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    filled: true,
-                    fillColor: Colors.grey[50],
-                  ),
-                  textInputAction: TextInputAction.done,
-                  validator: (val) {
-                    if (val == null || val.isEmpty) {
-                      return 'الرجاء إدخال كلمة المرور';
-                    }
-                    if (val.length < 6) {
-                      return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // اختيار نوع المستخدم
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.blue[200]!),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  // Header with decorative shapes
+                  Stack(
+                    clipBehavior: Clip.none,
                     children: [
-                      Text(
-                        'نوع المستخدم',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
+                      // Blue shape
+                      Container(
+                        width: 200,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF3D5A80),
+                          borderRadius: BorderRadius.circular(60),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _RoleCard(
-                              icon: '🎓',
-                              title: 'طالب',
-                              subtitle: 'أريد التعلم',
-                              isSelected: role == 'student',
-                              onTap: () => setState(() => role = 'student'),
-                            ),
+                      // Yellow/Gold shape
+                      Positioned(
+                        left: 100,
+                        top: 20,
+                        child: Container(
+                          width: 150,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE9C46A),
+                            borderRadius: BorderRadius.circular(60),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _RoleCard(
-                              icon: '🧭',
-                              title: 'مرشد',
-                              subtitle: 'أريد التدريس',
-                              isSelected: role == 'guide',
-                              onTap: () => setState(() => role = 'guide'),
+                        ),
+                      ),
+                      // Text on top
+                      const Positioned(
+                        left: 20,
+                        top: 30,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Create',
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                        ],
+                            Text(
+                              'Account',
+                              style: TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 32),
 
-                // زر التسجيل
-                SizedBox(
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: isLoading ? null : _register,
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 60),
+
+                  // Name Field
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: TextFormField(
+                      controller: _usernameController,
+                      decoration: InputDecoration(
+                        hintText: 'Name',
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
                       ),
-                      elevation: 2,
+                      textInputAction: TextInputAction.next,
+                      validator: (val) {
+                        if (val == null || val.isEmpty) {
+                          return 'Please enter your name';
+                        }
+                        if (val.length < 3) {
+                          return 'Name must be at least 3 characters';
+                        }
+                        return null;
+                      },
                     ),
-                    child: isLoading
-                        ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'إنشاء الحساب',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
                   ),
-                ),
-                const SizedBox(height: 16),
 
-                // رابط تسجيل الدخول
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'لديك حساب بالفعل؟',
-                      style: TextStyle(color: Colors.grey[600]),
+                  const SizedBox(height: 16),
+
+                  // Email Field
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
                     ),
-                    TextButton(
+                    child: TextFormField(
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: InputDecoration(
+                        hintText: 'Email',
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                      ),
+                      textInputAction: TextInputAction.next,
+                      validator: (val) {
+                        if (val == null || val.isEmpty) {
+                          return 'Please enter your email';
+                        }
+                        final emailRegex = RegExp(
+                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                        );
+                        if (!emailRegex.hasMatch(val)) {
+                          return 'Please enter a valid email';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Password Field
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: TextFormField(
+                      controller: _passwordController,
+                      obscureText: _obscurePassword,
+                      decoration: InputDecoration(
+                        hintText: 'Password',
+                        hintStyle: TextStyle(color: Colors.grey.shade400),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_outlined
+                                : Icons.visibility_off_outlined,
+                            color: Colors.grey.shade600,
+                          ),
+                          onPressed: () {
+                            setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            );
+                          },
+                        ),
+                      ),
+                      textInputAction: TextInputAction.done,
+                      validator: (val) {
+                        if (val == null || val.isEmpty) {
+                          return 'Please enter a password';
+                        }
+                        if (val.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Role Selection
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'I am a:',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF3D5A80),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _RoleCard(
+                                icon: Icons.school_rounded,
+                                title: 'Student',
+                                isSelected: role == 'student',
+                                onTap: () => setState(() => role = 'student'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _RoleCard(
+                                icon: Icons.explore_rounded,
+                                title: 'Guide',
+                                isSelected: role == 'guide',
+                                onTap: () => setState(() => role = 'guide'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 28),
+
+                  // Sign Up Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : _register,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF3D5A80),
+                        disabledBackgroundColor: const Color(
+                          0xFF3D5A80,
+                        ).withOpacity(0.6),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Sign Up',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Icon(
+                                  Icons.arrow_forward,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  // Login Link
+                  Center(
+                    child: TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: const Text(
-                        'تسجيل الدخول',
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                        'Already have an account? Login',
+                        style: TextStyle(
+                          color: Color(0xFF3D5A80),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -302,18 +374,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 }
 
-// Widget مخصص لبطاقة اختيار الدور
+// Custom Role Card Widget
 class _RoleCard extends StatelessWidget {
-  final String icon;
+  final IconData icon;
   final String title;
-  final String subtitle;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _RoleCard({
     required this.icon,
     required this.title,
-    required this.subtitle,
     required this.isSelected,
     required this.onTap,
   });
@@ -323,32 +393,30 @@ class _RoleCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.blue : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? const Color(0xFF3D5A80) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? Colors.blue : Colors.grey[300]!,
+            color: isSelected ? const Color(0xFF3D5A80) : Colors.grey.shade300,
             width: 2,
           ),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(icon, style: const TextStyle(fontSize: 32)),
+            Icon(
+              icon,
+              size: 32,
+              color: isSelected ? Colors.white : const Color(0xFF3D5A80),
+            ),
             const SizedBox(height: 8),
             Text(
               title,
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: isSelected ? Colors.white : Colors.black,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 12,
-                color: isSelected ? Colors.white70 : Colors.grey[600],
+                fontSize: 14,
+                color: isSelected ? Colors.white : const Color(0xFF3D5A80),
               ),
             ),
           ],

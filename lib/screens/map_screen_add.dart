@@ -32,11 +32,11 @@ class _MapCreateScreenState extends State<MapCreateScreen>
   late AnimationController _fabAnimationController;
   late Animation<double> _fabAnimation;
 
-  // Professional color palette
-  static const Color primaryGreen = Color(0xFF2E7D32);
-  static const Color accentOrange = Color(0xFFFF6F00);
-  static const Color lightGreen = Color(0xFF66BB6A);
-  static const Color darkGreen = Color(0xFF1B5E20);
+  // Professional color palette matching login/register
+  static const Color primaryBlue = Color(0xFF3D5A80);
+  static const Color accentGold = Color(0xFFE9C46A);
+  static const Color lightBlue = Color(0xFF6B89A8);
+  static const Color darkBlue = Color(0xFF2A3F5F);
   static const Color backgroundColor = Color(0xFFF5F7FA);
   static const Color cardColor = Colors.white;
 
@@ -126,7 +126,7 @@ class _MapCreateScreenState extends State<MapCreateScreen>
 
     try {
       await FirebaseFirestore.instance.collection('roads').add(road);
-      _showSnackBar('Route saved successfully! 🎉');
+      _showSnackBar('Route saved successfully!');
 
       setState(() {
         _points.clear();
@@ -147,11 +147,11 @@ class _MapCreateScreenState extends State<MapCreateScreen>
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: accentOrange),
-            SizedBox(width: 12),
-            Text('Clear Map?'),
+            Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700),
+            const SizedBox(width: 12),
+            const Text('Clear Map?'),
           ],
         ),
         content: const Text(
@@ -215,7 +215,7 @@ class _MapCreateScreenState extends State<MapCreateScreen>
             ),
           ],
         ),
-        backgroundColor: isError ? Colors.red.shade700 : primaryGreen,
+        backgroundColor: isError ? Colors.red.shade700 : primaryBlue,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
@@ -231,13 +231,13 @@ class _MapCreateScreenState extends State<MapCreateScreen>
       backgroundColor: backgroundColor,
       body: CustomScrollView(
         slivers: [
-          // Modern App Bar
+          // Modern App Bar - matching login/register style
           SliverAppBar(
             expandedHeight: 0,
             floating: false,
             pinned: true,
             elevation: 0,
-            backgroundColor: primaryGreen,
+            backgroundColor: primaryBlue,
             title: const Row(
               children: [
                 Icon(Icons.terrain, size: 24),
@@ -249,8 +249,8 @@ class _MapCreateScreenState extends State<MapCreateScreen>
               ],
             ),
             actions: [
-              _buildAppBarButton(
-                icon: Icons.list_alt_rounded,
+              IconButton(
+                icon: const Icon(Icons.list_alt_rounded, size: 22),
                 tooltip: 'My Routes',
                 onPressed: () {
                   Navigator.push(
@@ -258,11 +258,13 @@ class _MapCreateScreenState extends State<MapCreateScreen>
                     MaterialPageRoute(builder: (_) => const MyRoadsScreen()),
                   );
                 },
+                color: Colors.white,
               ),
-              _buildAppBarButton(
-                icon: Icons.delete_sweep_rounded,
+              IconButton(
+                icon: const Icon(Icons.delete_sweep_rounded, size: 22),
                 tooltip: 'Clear Map',
                 onPressed: _clearAll,
+                color: Colors.white,
               ),
               const SizedBox(width: 8),
             ],
@@ -296,39 +298,30 @@ class _MapCreateScreenState extends State<MapCreateScreen>
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: darkGreen,
+                            color: darkBlue,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        TextField(
-                          controller: _roadNameController,
-                          decoration: InputDecoration(
-                            hintText: 'Enter route name...',
-                            hintStyle: TextStyle(color: Colors.grey.shade400),
-                            prefixIcon: const Icon(
-                              Icons.hiking_rounded,
-                              color: primaryGreen,
-                              size: 20,
-                            ),
-                            filled: true,
-                            fillColor: backgroundColor,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 12,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide.none,
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              borderSide: const BorderSide(
-                                color: primaryGreen,
-                                width: 2,
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: Colors.grey.shade300),
+                          ),
+                          child: TextField(
+                            controller: _roadNameController,
+                            decoration: InputDecoration(
+                              hintText: 'Enter route name...',
+                              hintStyle: TextStyle(color: Colors.grey.shade400),
+                              prefixIcon: const Icon(
+                                Icons.hiking_rounded,
+                                color: primaryBlue,
+                                size: 20,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
                               ),
                             ),
                           ),
@@ -372,7 +365,7 @@ class _MapCreateScreenState extends State<MapCreateScreen>
                               polylines: [
                                 Polyline(
                                   points: _currentRoute!.points,
-                                  color: primaryGreen,
+                                  color: primaryBlue,
                                   strokeWidth: 6,
                                   borderColor: Colors.white,
                                   borderStrokeWidth: 2,
@@ -415,7 +408,7 @@ class _MapCreateScreenState extends State<MapCreateScreen>
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   CircularProgressIndicator(
-                                    color: primaryGreen,
+                                    color: primaryBlue,
                                     strokeWidth: 3,
                                   ),
                                   SizedBox(height: 20),
@@ -424,7 +417,7 @@ class _MapCreateScreenState extends State<MapCreateScreen>
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
-                                      color: darkGreen,
+                                      color: darkBlue,
                                     ),
                                   ),
                                 ],
@@ -444,13 +437,11 @@ class _MapCreateScreenState extends State<MapCreateScreen>
                               vertical: 10,
                             ),
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [primaryGreen, lightGreen],
-                              ),
+                              color: primaryBlue,
                               borderRadius: BorderRadius.circular(25),
                               boxShadow: [
                                 BoxShadow(
-                                  color: primaryGreen.withOpacity(0.4),
+                                  color: primaryBlue.withOpacity(0.4),
                                   blurRadius: 12,
                                   offset: const Offset(0, 4),
                                 ),
@@ -496,8 +487,8 @@ class _MapCreateScreenState extends State<MapCreateScreen>
       floatingActionButton: ScaleTransition(
         scale: _fabAnimation,
         child: FloatingActionButton.extended(
-          backgroundColor: accentOrange,
-          foregroundColor: Colors.white,
+          backgroundColor: accentGold,
+          foregroundColor: darkBlue,
           elevation: 4,
           icon: const Icon(Icons.emoji_events_rounded, size: 22),
           label: const Text(
@@ -515,27 +506,14 @@ class _MapCreateScreenState extends State<MapCreateScreen>
     );
   }
 
-  Widget _buildAppBarButton({
-    required IconData icon,
-    required String tooltip,
-    required VoidCallback onPressed,
-  }) {
-    return IconButton(
-      icon: Icon(icon, size: 22),
-      tooltip: tooltip,
-      onPressed: onPressed,
-      color: Colors.white,
-    );
-  }
-
   Widget _buildMarker(int index) {
     final isStart = index == 0;
     final isEnd = index == _points.length - 1;
     final Color markerColor = isStart
-        ? primaryGreen
+        ? primaryBlue
         : isEnd
         ? Colors.red.shade600
-        : Colors.blue.shade600;
+        : accentGold;
 
     return Stack(
       alignment: Alignment.center,
@@ -575,42 +553,32 @@ class _MapCreateScreenState extends State<MapCreateScreen>
   }
 
   Widget _buildSaveButton() {
-    return Container(
+    return SizedBox(
       width: double.infinity,
-      height: 50,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [primaryGreen, lightGreen]),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: primaryGreen.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+      height: 56,
+      child: ElevatedButton(
+        onPressed: _saveRoad,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryBlue,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: _saveRoad,
-          child: const Center(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.save_rounded, color: Colors.white, size: 22),
-                SizedBox(width: 10),
-                Text(
-                  'Save Route',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+          elevation: 0,
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Save Route',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          ),
+            SizedBox(width: 8),
+            Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+          ],
         ),
       ),
     );
