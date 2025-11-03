@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'GuideCompetitionDetailScreen.dart';
+import '../widgets/app_loading.dart';
 
 class GuideCompetitionsScreen extends StatelessWidget {
   const GuideCompetitionsScreen({super.key});
@@ -27,8 +28,8 @@ class GuideCompetitionsScreen extends StatelessWidget {
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: primaryBlue),
+            return Center(
+              child: AppLoadingIndicator(size: 60),
             );
           }
 

@@ -4,6 +4,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'EditRoadScreen.dart';
 import '../utils/route_helpers.dart';
+import '../widgets/app_loading.dart';
 
 class GuideRoadsScreen extends StatefulWidget {
   const GuideRoadsScreen({super.key});
@@ -77,8 +78,8 @@ class _GuideRoadsScreenState extends State<GuideRoadsScreen> {
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(color: primaryBlue),
+                  return Center(
+                    child: AppLoadingIndicator(size: 60),
                   );
                 }
 
