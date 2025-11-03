@@ -56,12 +56,23 @@ class _MapViewScreenState extends State<MapViewScreen> {
       if (roadDoc.exists) {
         final data = roadDoc.data();
         final points = data?['points'] as List;
+        final routePolyline = data?['routePolyline'] as List?;
 
         setState(() {
           _waypoints = points.map((p) => Map<String, dynamic>.from(p)).toList();
-          _routePoints = points
-              .map((p) => LatLng(p['latitude'] as double, p['longitude'] as double))
-              .toList();
+
+          // Use saved route polyline if available, otherwise fall back to waypoints
+          if (routePolyline != null && routePolyline.isNotEmpty) {
+            _routePoints = routePolyline
+                .map((p) => LatLng(p['latitude'] as double, p['longitude'] as double))
+                .toList();
+          } else {
+            // Fallback: use waypoints directly
+            _routePoints = points
+                .map((p) => LatLng(p['latitude'] as double, p['longitude'] as double))
+                .toList();
+          }
+
           _isLoading = false;
         });
 

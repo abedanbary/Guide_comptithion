@@ -272,6 +272,10 @@ class GuideRoadsScreen extends StatelessWidget {
   void _showRoadDetails(BuildContext context, String roadId, Map<String, dynamic> data) {
     final name = data['roadName'] ?? 'Untitled Route';
     final points = (data['points'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final routePolyline = (data['routePolyline'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+
+    // Use route polyline if available, otherwise use waypoints
+    final displayPoints = routePolyline.isNotEmpty ? routePolyline : points;
 
     showModalBottomSheet(
       context: context,
@@ -372,7 +376,7 @@ class GuideRoadsScreen extends StatelessWidget {
                               PolylineLayer(
                                 polylines: [
                                   Polyline(
-                                    points: points
+                                    points: displayPoints
                                         .map((p) => LatLng(
                                               p['latitude'] as double,
                                               p['longitude'] as double,

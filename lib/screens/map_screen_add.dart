@@ -100,11 +100,23 @@ class _MapCreateScreenState extends State<MapCreateScreen> {
       numberedPoints.add({'id': i + 1, ...point});
     }
 
+    // Save route polyline points for display
+    final List<Map<String, dynamic>> routePolyline = [];
+    if (_currentRoute != null) {
+      for (var point in _currentRoute!.points) {
+        routePolyline.add({
+          'latitude': point.latitude,
+          'longitude': point.longitude,
+        });
+      }
+    }
+
     final road = {
       'id': roadId,
       'roadName': _roadNameController.text,
       'createdAt': DateTime.now(),
       'points': numberedPoints,
+      'routePolyline': routePolyline, // Save complete route path
     };
 
     try {
