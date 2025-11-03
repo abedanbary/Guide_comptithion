@@ -254,7 +254,7 @@ class _CompetitionScreenState extends State<CompetitionScreen> {
                         hintText: 'Enter competition name...',
                         hintStyle: TextStyle(color: Colors.grey.shade400),
                         prefixIcon: Icon(
-                          Icons.trophy,
+                          Icons.emoji_events,
                           color: primaryBlue,
                         ),
                         border: InputBorder.none,
