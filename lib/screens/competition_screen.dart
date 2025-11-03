@@ -42,7 +42,7 @@ class _CompetitionScreenState extends State<CompetitionScreen> {
       'roadId': _selectedRoadId,
       'roadName': _selectedRoadName,
       'competitors': [],
-      'scores': [],
+      'scores': {}, // Map instead of List
       'isPublished': true,
     };
 
