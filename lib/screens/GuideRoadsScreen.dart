@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'EditRoadScreen.dart';
+import '../utils/route_helpers.dart';
 
 class GuideRoadsScreen extends StatefulWidget {
   const GuideRoadsScreen({super.key});
@@ -198,6 +199,14 @@ class _GuideRoadsScreenState extends State<GuideRoadsScreen> {
     final createdAt = data['createdAt']?.toDate();
     final points = (data['points'] as List?)?.cast<Map<String, dynamic>>() ?? [];
     final pointsCount = points.length;
+    final routePolyline = (data['routePolyline'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final imageUrl = data['imageUrl'] as String?;
+
+    // Calculate distance and time
+    Map<String, dynamic> routeInfo = {'distanceFormatted': '---', 'timeFormatted': '---'};
+    if (routePolyline.isNotEmpty) {
+      routeInfo = RouteHelpers.calculateRouteInfo(routePolyline);
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -217,36 +226,65 @@ class _GuideRoadsScreenState extends State<GuideRoadsScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () => _showRoadDetails(context, roadId, data),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Route Image (if available)
+              if (imageUrl != null)
+                ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                  child: Image.network(
+                    imageUrl,
+                    height: 160,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 160,
+                        color: Colors.grey.shade200,
+                        child: Icon(
+                          Icons.terrain,
+                          size: 60,
+                          color: Colors.grey.shade400,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: primaryBlue.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.terrain,
-                        color: primaryBlue,
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            name,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: darkBlue,
+                    Row(
+                      children: [
+                        if (imageUrl == null)
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: primaryBlue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.terrain,
+                              color: primaryBlue,
+                              size: 28,
+                            ),
+                          ),
+                        if (imageUrl == null) const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: darkBlue,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -271,18 +309,24 @@ class _GuideRoadsScreenState extends State<GuideRoadsScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                Row(
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
                     _buildStatChip(
                       Icons.location_on,
                       '$pointsCount waypoints',
                       primaryBlue,
                     ),
-                    const SizedBox(width: 8),
                     _buildStatChip(
-                      Icons.quiz,
-                      '$pointsCount quizzes',
-                      accentGold,
+                      Icons.straighten,
+                      routeInfo['distanceFormatted'],
+                      Colors.green.shade700,
+                    ),
+                    _buildStatChip(
+                      Icons.access_time,
+                      routeInfo['timeFormatted'],
+                      Colors.orange.shade700,
                     ),
                   ],
                 ),
@@ -333,8 +377,10 @@ class _GuideRoadsScreenState extends State<GuideRoadsScreen> {
                     ),
                   ],
                 ),
-              ],
-            ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),

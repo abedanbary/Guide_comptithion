@@ -178,9 +178,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         slivers: [
           // Modern App Bar with gradient
           SliverAppBar(
-            expandedHeight: 200,
+            expandedHeight: 180,
             pinned: true,
             elevation: 0,
+            automaticallyImplyLeading: false, // Remove back button
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(
@@ -211,7 +212,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Content
           SliverToBoxAdapter(
             child: Transform.translate(
-              offset: const Offset(0, -50),
+              offset: const Offset(0, -70),
               child: Column(
                 children: [
                   // Profile Avatar with Edit Button
