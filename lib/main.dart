@@ -4,6 +4,7 @@ import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/map_screen_add.dart';
 import 'screens/StudentHomeScreen.dart';
+import 'screens/GuideHomeScreen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +25,8 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/createRoad': (context) => const MapCreateScreen(), // Guide
+        '/guideHome': (context) => const GuideHomeScreen(), // Guide Dashboard
+        '/createRoad': (context) => const MapCreateScreen(), // Create Route
         '/studentHome': (context) => const StudentHomeScreen(), // Student
       },
     );

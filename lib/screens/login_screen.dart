@@ -34,7 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (user.role == 'guide') {
-        Navigator.pushReplacementNamed(context, '/createRoad');
+        Navigator.pushReplacementNamed(context, '/guideHome');
       } else if (user.role == 'student') {
         Navigator.pushReplacementNamed(context, '/studentHome');
       }
