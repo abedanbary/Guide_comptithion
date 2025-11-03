@@ -4,8 +4,16 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'EditRoadScreen.dart';
 
-class GuideRoadsScreen extends StatelessWidget {
+class GuideRoadsScreen extends StatefulWidget {
   const GuideRoadsScreen({super.key});
+
+  @override
+  State<GuideRoadsScreen> createState() => _GuideRoadsScreenState();
+}
+
+class _GuideRoadsScreenState extends State<GuideRoadsScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   // Professional color palette
   static const Color primaryBlue = Color(0xFF3D5A80);
@@ -19,36 +27,130 @@ class GuideRoadsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection('roads')
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: primaryBlue),
-            );
-          }
-
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return _buildEmptyState(context);
-          }
-
-          final roads = snapshot.data!.docs;
-
-          return ListView.builder(
+      body: Column(
+        children: [
+          // Search Bar
+          Container(
             padding: const EdgeInsets.all(16),
-            itemCount: roads.length,
-            itemBuilder: (context, index) {
-              final road = roads[index];
-              final data = road.data() as Map<String, dynamic>;
-              return _buildRoadCard(context, road.id, data);
-            },
-          );
-        },
+            color: cardColor,
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  setState(() => _searchQuery = value.toLowerCase());
+                },
+                decoration: InputDecoration(
+                  hintText: 'Search routes...',
+                  hintStyle: TextStyle(color: Colors.grey.shade400),
+                  prefixIcon: const Icon(Icons.search, color: primaryBlue),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        )
+                      : null,
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Roads List
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('roads')
+                  .orderBy('createdAt', descending: true)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: primaryBlue),
+                  );
+                }
+
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return _buildEmptyState(context);
+                }
+
+                final roads = snapshot.data!.docs;
+
+                // Filter roads based on search query
+                final filteredRoads = roads.where((road) {
+                  final data = road.data() as Map<String, dynamic>;
+                  final roadName = (data['roadName'] ?? '').toString().toLowerCase();
+                  return roadName.contains(_searchQuery);
+                }).toList();
+
+                if (filteredRoads.isEmpty && _searchQuery.isNotEmpty) {
+                  return _buildNoResultsState();
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: filteredRoads.length,
+                  itemBuilder: (context, index) {
+                    final road = filteredRoads[index];
+                    final data = road.data() as Map<String, dynamic>;
+                    return _buildRoadCard(context, road.id, data);
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  Widget _buildNoResultsState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off,
+            size: 80,
+            color: Colors.grey.shade400,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No routes found',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Try a different search term',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey.shade500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Widget _buildEmptyState(BuildContext context) {
@@ -272,6 +374,10 @@ class GuideRoadsScreen extends StatelessWidget {
   void _showRoadDetails(BuildContext context, String roadId, Map<String, dynamic> data) {
     final name = data['roadName'] ?? 'Untitled Route';
     final points = (data['points'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final routePolyline = (data['routePolyline'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+
+    // Use route polyline if available, otherwise use waypoints
+    final displayPoints = routePolyline.isNotEmpty ? routePolyline : points;
 
     showModalBottomSheet(
       context: context,
@@ -372,7 +478,7 @@ class GuideRoadsScreen extends StatelessWidget {
                               PolylineLayer(
                                 polylines: [
                                   Polyline(
-                                    points: points
+                                    points: displayPoints
                                         .map((p) => LatLng(
                                               p['latitude'] as double,
                                               p['longitude'] as double,

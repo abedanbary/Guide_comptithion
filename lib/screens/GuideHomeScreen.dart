@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'map_screen_add.dart';
 import 'GuideRoadsScreen.dart';
 import 'GuideCompetitionsScreen.dart';
+import 'ProfileScreen.dart';
 
 class GuideHomeScreen extends StatefulWidget {
   const GuideHomeScreen({super.key});
@@ -26,6 +27,7 @@ class _GuideHomeScreenState extends State<GuideHomeScreen> {
   final List<Widget> _screens = const [
     GuideRoadsScreen(),
     GuideCompetitionsScreen(),
+    ProfileScreen(),
   ];
 
   @override
@@ -108,11 +110,15 @@ class _GuideHomeScreenState extends State<GuideHomeScreen> {
           items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.route),
-              label: 'My Routes',
+              label: 'Routes',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.emoji_events),
               label: 'Competitions',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
             ),
           ],
         ),

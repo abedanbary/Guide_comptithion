@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 
 import '../models/road.dart';
 import '../models/point.dart';
@@ -27,6 +30,8 @@ class _MapCreateScreenState extends State<MapCreateScreen> {
   List<Map<String, dynamic>> _pointDetails = [];
   RouteResult? _currentRoute;
   bool _isLoadingRoute = false;
+  XFile? _selectedImage;
+  bool _isUploadingImage = false;
 
   // Professional color palette matching login/register
   static const Color primaryBlue = Color(0xFF3D5A80);
@@ -82,6 +87,26 @@ class _MapCreateScreenState extends State<MapCreateScreen> {
     setState(() => _isLoadingRoute = false);
   }
 
+  /// Pick image for route
+  Future<void> _pickImage() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+        maxWidth: 1920,
+        maxHeight: 1080,
+      );
+
+      if (image != null) {
+        setState(() => _selectedImage = image);
+        _showSnackBar('Image selected successfully!');
+      }
+    } catch (e) {
+      _showSnackBar('Error selecting image', isError: true);
+    }
+  }
+
   /// Save road to Firebase Firestore
   Future<void> _saveRoad() async {
     if (_roadNameController.text.isEmpty || _points.isEmpty) {
@@ -92,22 +117,49 @@ class _MapCreateScreenState extends State<MapCreateScreen> {
       return;
     }
 
-    final roadId = DateTime.now().millisecondsSinceEpoch;
-
-    final List<Map<String, dynamic>> numberedPoints = [];
-    for (int i = 0; i < _pointDetails.length; i++) {
-      final point = _pointDetails[i];
-      numberedPoints.add({'id': i + 1, ...point});
-    }
-
-    final road = {
-      'id': roadId,
-      'roadName': _roadNameController.text,
-      'createdAt': DateTime.now(),
-      'points': numberedPoints,
-    };
+    setState(() => _isUploadingImage = true);
 
     try {
+      final roadId = DateTime.now().millisecondsSinceEpoch;
+
+      final List<Map<String, dynamic>> numberedPoints = [];
+      for (int i = 0; i < _pointDetails.length; i++) {
+        final point = _pointDetails[i];
+        numberedPoints.add({'id': i + 1, ...point});
+      }
+
+      // Save route polyline points for display
+      final List<Map<String, dynamic>> routePolyline = [];
+      if (_currentRoute != null) {
+        for (var point in _currentRoute!.points) {
+          routePolyline.add({
+            'latitude': point.latitude,
+            'longitude': point.longitude,
+          });
+        }
+      }
+
+      // Upload image if selected
+      String? imageUrl;
+      if (_selectedImage != null) {
+        final storageRef = FirebaseStorage.instance
+            .ref()
+            .child('route_images')
+            .child('$roadId.jpg');
+
+        await storageRef.putFile(File(_selectedImage!.path));
+        imageUrl = await storageRef.getDownloadURL();
+      }
+
+      final road = {
+        'id': roadId,
+        'roadName': _roadNameController.text,
+        'createdAt': DateTime.now(),
+        'points': numberedPoints,
+        'routePolyline': routePolyline, // Save complete route path
+        if (imageUrl != null) 'imageUrl': imageUrl,
+      };
+
       await FirebaseFirestore.instance.collection('roads').add(road);
       _showSnackBar('Route saved successfully!');
 
@@ -116,9 +168,12 @@ class _MapCreateScreenState extends State<MapCreateScreen> {
         _pointDetails.clear();
         _currentRoute = null;
         _roadNameController.clear();
+        _selectedImage = null;
       });
     } catch (e) {
       _showSnackBar('Failed to save route. Please try again.', isError: true);
+    } finally {
+      setState(() => _isUploadingImage = false);
     }
   }
 
@@ -151,6 +206,7 @@ class _MapCreateScreenState extends State<MapCreateScreen> {
                 _points.clear();
                 _pointDetails.clear();
                 _currentRoute = null;
+                _selectedImage = null;
               });
               Navigator.pop(context);
               _showSnackBar('Map cleared');
@@ -309,6 +365,109 @@ class _MapCreateScreenState extends State<MapCreateScreen> {
                             ),
                           ),
                         ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Route Image Upload Card
+                Container(
+                  margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.06),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Route Image (Optional)',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: darkBlue,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        if (_selectedImage != null)
+                          Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: Image.file(
+                                  File(_selectedImage!.path),
+                                  height: 150,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Positioned(
+                                top: 8,
+                                right: 8,
+                                child: GestureDetector(
+                                  onTap: () => setState(() => _selectedImage = null),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red.shade600,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.close,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        if (_selectedImage == null)
+                          GestureDetector(
+                            onTap: _pickImage,
+                            child: Container(
+                              height: 100,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  style: BorderStyle.solid,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      Icons.add_photo_alternate_outlined,
+                                      color: primaryBlue,
+                                      size: 32,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Add Route Image',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -519,29 +678,53 @@ class _MapCreateScreenState extends State<MapCreateScreen> {
       width: double.infinity,
       height: 56,
       child: ElevatedButton(
-        onPressed: _saveRoad,
+        onPressed: _isUploadingImage ? null : _saveRoad,
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryBlue,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
           elevation: 0,
+          disabledBackgroundColor: primaryBlue.withOpacity(0.6),
         ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Save Route',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+        child: _isUploadingImage
+            ? const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'Saving...',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              )
+            : const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Save Route',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                ],
               ),
-            ),
-            SizedBox(width: 8),
-            Icon(Icons.arrow_forward, color: Colors.white, size: 20),
-          ],
-        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'CompetitionDetailScreen.dart';
+import 'ProfileScreen.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -19,6 +20,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   static const Color backgroundColor = Color(0xFFF5F7FA);
   static const Color cardColor = Colors.white;
 
+  int _currentIndex = 0;
   String _currentTab = 'available';
   final currentUser = FirebaseAuth.instance.currentUser;
 
@@ -27,13 +29,13 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.emoji_events, size: 24),
-            SizedBox(width: 8),
+            Icon(_currentIndex == 0 ? Icons.emoji_events : Icons.person, size: 24),
+            const SizedBox(width: 8),
             Text(
-              'Competitions',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+              _currentIndex == 0 ? 'Competitions' : 'Profile',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
           ],
         ),
@@ -52,85 +54,120 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Welcome Card
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [primaryBlue, lightBlue],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+      body: _currentIndex == 0 ? _buildCompetitionsView() : const ProfileScreen(),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Welcome back!',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  currentUser?.email ?? 'Student',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    _buildStatCard('Active', Icons.play_circle_outline, accentGold),
-                    const SizedBox(width: 12),
-                    _buildStatCard('Completed', Icons.check_circle_outline, Colors.green),
-                  ],
-                ),
-              ],
+          ],
+        ),
+        child: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) => setState(() => _currentIndex = index),
+          backgroundColor: Colors.white,
+          selectedItemColor: primaryBlue,
+          unselectedItemColor: Colors.grey.shade600,
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          type: BottomNavigationBarType.fixed,
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.emoji_events),
+              label: 'Competitions',
             ),
-          ),
-
-          // Tab Selector
-          Container(
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Profile',
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildTabButton('Available', 'available'),
-                ),
-                Expanded(
-                  child: _buildTabButton('My Competitions', 'mine'),
-                ),
-              ],
-            ),
-          ),
-
-          // Competition List
-          Expanded(
-            child: _currentTab == 'available'
-                ? _buildAvailableCompetitions()
-                : _buildMyCompetitions(),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildCompetitionsView() {
+    return Column(
+      children: [
+        // Welcome Card
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [primaryBlue, lightBlue],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Welcome back!',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                currentUser?.email ?? 'Student',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  _buildStatCard('Active', Icons.play_circle_outline, accentGold),
+                  const SizedBox(width: 12),
+                  _buildStatCard('Completed', Icons.check_circle_outline, Colors.green),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        // Tab Selector
+        Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildTabButton('Available', 'available'),
+              ),
+              Expanded(
+                child: _buildTabButton('My Competitions', 'mine'),
+              ),
+            ],
+          ),
+        ),
+
+        // Competition List
+        Expanded(
+          child: _currentTab == 'available'
+              ? _buildAvailableCompetitions()
+              : _buildMyCompetitions(),
+        ),
+      ],
     );
   }
 
