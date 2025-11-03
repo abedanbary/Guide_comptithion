@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloudinary_public/cloudinary_public.dart';
 import 'dart:io';
 
 class ProfileScreen extends StatefulWidget {
@@ -68,14 +68,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       setState(() => isUploadingImage = true);
 
-      // Upload to Firebase Storage
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('profile_images')
-          .child('${currentUser!.uid}.jpg');
+      // TODO: Replace with your Cloudinary credentials
+      // Get them from: https://console.cloudinary.com/
+      final cloudinary = CloudinaryPublic(
+        'YOUR_CLOUD_NAME',  // مثل: 'dxxxxxxx'
+        'YOUR_UPLOAD_PRESET', // اختر اسم مثل: 'profile_photos'
+        cache: false,
+      );
 
-      await storageRef.putFile(File(image.path));
-      final downloadUrl = await storageRef.getDownloadURL();
+      // Upload to Cloudinary
+      final response = await cloudinary.uploadFile(
+        CloudinaryFile.fromFile(
+          image.path,
+          folder: 'profile_images',
+          resourceType: CloudinaryResourceType.Image,
+        ),
+      );
+
+      final downloadUrl = response.secureUrl;
 
       // Update Firestore
       await FirebaseFirestore.instance

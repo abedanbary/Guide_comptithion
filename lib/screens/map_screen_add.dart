@@ -3,7 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloudinary_public/cloudinary_public.dart';
 import 'dart:io';
 
 import '../models/road.dart';
@@ -139,16 +139,26 @@ class _MapCreateScreenState extends State<MapCreateScreen> {
         }
       }
 
-      // Upload image if selected
+      // Upload image if selected using Cloudinary
       String? imageUrl;
       if (_selectedImage != null) {
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('route_images')
-            .child('$roadId.jpg');
+        // TODO: Replace with your Cloudinary credentials
+        // Get them from: https://console.cloudinary.com/
+        final cloudinary = CloudinaryPublic(
+          'YOUR_CLOUD_NAME',  // مثل: 'dxxxxxxx'
+          'YOUR_UPLOAD_PRESET', // اختر اسم مثل: 'route_photos'
+          cache: false,
+        );
 
-        await storageRef.putFile(File(_selectedImage!.path));
-        imageUrl = await storageRef.getDownloadURL();
+        final response = await cloudinary.uploadFile(
+          CloudinaryFile.fromFile(
+            _selectedImage!.path,
+            folder: 'route_images',
+            resourceType: CloudinaryResourceType.Image,
+          ),
+        );
+
+        imageUrl = response.secureUrl;
       }
 
       final road = {

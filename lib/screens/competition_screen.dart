@@ -113,7 +113,7 @@ class _CompetitionScreenState extends State<CompetitionScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline, color: primaryBlue),
+                      Icon(Icons.info_outline, color: primaryBlue),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -224,7 +224,7 @@ class _CompetitionScreenState extends State<CompetitionScreen> {
                           color: accentGold.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.title,
                           color: primaryBlue,
                           size: 24,
@@ -253,8 +253,8 @@ class _CompetitionScreenState extends State<CompetitionScreen> {
                       decoration: InputDecoration(
                         hintText: 'Enter competition name...',
                         hintStyle: TextStyle(color: Colors.grey.shade400),
-                        prefixIcon: const Icon(
-                          Icons.trophy,
+                        prefixIcon: Icon(
+                          Icons.emoji_events,
                           color: primaryBlue,
                         ),
                         border: InputBorder.none,
@@ -280,7 +280,7 @@ class _CompetitionScreenState extends State<CompetitionScreen> {
                     color: primaryBlue.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.route, color: primaryBlue, size: 24),
+                  child: Icon(Icons.route, color: primaryBlue, size: 24),
                 ),
                 const SizedBox(width: 12),
                 const Text(
@@ -314,7 +314,7 @@ class _CompetitionScreenState extends State<CompetitionScreen> {
                         ),
                       ],
                     ),
-                    child: const Center(
+                    child: Center(
                       child: CircularProgressIndicator(color: primaryBlue),
                     ),
                   );
