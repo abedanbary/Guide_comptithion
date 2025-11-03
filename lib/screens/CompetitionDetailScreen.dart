@@ -21,6 +21,7 @@ class CompetitionDetailScreen extends StatefulWidget {
 class _CompetitionDetailScreenState extends State<CompetitionDetailScreen> {
   bool _isJoining = false;
   bool _isJoined = false;
+  bool _hasCompleted = false;
   final currentUser = FirebaseAuth.instance.currentUser;
 
   // Professional color palette
@@ -39,9 +40,12 @@ class _CompetitionDetailScreenState extends State<CompetitionDetailScreen> {
 
   void _checkIfJoined() {
     final competitors = widget.competitionData['competitors'] as List?;
-    if (competitors != null && currentUser != null) {
+    final scores = widget.competitionData['scores'] as Map<String, dynamic>?;
+
+    if (currentUser != null) {
       setState(() {
-        _isJoined = competitors.contains(currentUser!.uid);
+        _isJoined = competitors?.contains(currentUser!.uid) ?? false;
+        _hasCompleted = scores?.containsKey(currentUser!.uid) ?? false;
       });
     }
   }
@@ -77,6 +81,11 @@ class _CompetitionDetailScreenState extends State<CompetitionDetailScreen> {
   void _startCompetition() {
     if (!_isJoined) {
       _showSnackBar('Please join the competition first', isError: true);
+      return;
+    }
+
+    if (_hasCompleted) {
+      _showSnackBar('You have already completed this competition!', isError: true);
       return;
     }
 
@@ -424,25 +433,32 @@ class _CompetitionDetailScreenState extends State<CompetitionDetailScreen> {
               if (!_isJoined) const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: _isJoined ? _startCompetition : null,
+                  onPressed: (_isJoined && !_hasCompleted) ? _startCompetition : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryBlue,
+                    backgroundColor: _hasCompleted
+                        ? Colors.green.shade600
+                        : primaryBlue,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                     elevation: 0,
-                    disabledBackgroundColor: Colors.grey.shade300,
+                    disabledBackgroundColor: _hasCompleted
+                        ? Colors.green.shade600
+                        : Colors.grey.shade300,
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.play_arrow, size: 24),
-                      SizedBox(width: 8),
+                      Icon(
+                        _hasCompleted ? Icons.check_circle : Icons.play_arrow,
+                        size: 24,
+                      ),
+                      const SizedBox(width: 8),
                       Text(
-                        'Start Route',
-                        style: TextStyle(
+                        _hasCompleted ? 'Completed' : 'Start Route',
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),

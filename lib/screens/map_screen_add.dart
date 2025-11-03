@@ -11,7 +11,6 @@ import '../servers/osrm_route_service.dart';
 import '../widgets/road_name_input.dart';
 import '../widgets/save_road_button.dart';
 import '../widgets/point_dialog.dart';
-import 'my_roads_screen.dart';
 import 'competition_screen.dart';
 
 class MapCreateScreen extends StatefulWidget {
@@ -21,16 +20,13 @@ class MapCreateScreen extends StatefulWidget {
   State<MapCreateScreen> createState() => _MapCreateScreenState();
 }
 
-class _MapCreateScreenState extends State<MapCreateScreen>
-    with SingleTickerProviderStateMixin {
+class _MapCreateScreenState extends State<MapCreateScreen> {
   final MapController _mapController = MapController();
   final TextEditingController _roadNameController = TextEditingController();
   List<LatLng> _points = [];
   List<Map<String, dynamic>> _pointDetails = [];
   RouteResult? _currentRoute;
   bool _isLoadingRoute = false;
-  late AnimationController _fabAnimationController;
-  late Animation<double> _fabAnimation;
 
   // Professional color palette matching login/register
   static const Color primaryBlue = Color(0xFF3D5A80);
@@ -40,19 +36,6 @@ class _MapCreateScreenState extends State<MapCreateScreen>
   static const Color backgroundColor = Color(0xFFF5F7FA);
   static const Color cardColor = Colors.white;
 
-  @override
-  void initState() {
-    super.initState();
-    _fabAnimationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
-    _fabAnimation = CurvedAnimation(
-      parent: _fabAnimationController,
-      curve: Curves.easeInOut,
-    );
-    _fabAnimationController.forward();
-  }
 
   /// Handle map tap: open dialog to add point details
   Future<void> _onMapTap(LatLng latLng) async {
@@ -250,21 +233,21 @@ class _MapCreateScreenState extends State<MapCreateScreen>
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.list_alt_rounded, size: 22),
-                tooltip: 'My Routes',
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const MyRoadsScreen()),
-                  );
-                },
-                color: Colors.white,
-              ),
-              IconButton(
                 icon: const Icon(Icons.delete_sweep_rounded, size: 22),
                 tooltip: 'Clear Map',
                 onPressed: _clearAll,
                 color: Colors.white,
+              ),
+              IconButton(
+                icon: const Icon(Icons.emoji_events_rounded, size: 22),
+                tooltip: 'Create Competition',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CompetitionScreen()),
+                  );
+                },
+                color: accentGold,
               ),
               const SizedBox(width: 8),
             ],
@@ -482,27 +465,6 @@ class _MapCreateScreenState extends State<MapCreateScreen>
           ),
         ],
       ),
-
-      // Competition FAB
-      floatingActionButton: ScaleTransition(
-        scale: _fabAnimation,
-        child: FloatingActionButton.extended(
-          backgroundColor: accentGold,
-          foregroundColor: darkBlue,
-          elevation: 4,
-          icon: const Icon(Icons.emoji_events_rounded, size: 22),
-          label: const Text(
-            'Competition',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-          ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CompetitionScreen()),
-            );
-          },
-        ),
-      ),
     );
   }
 
@@ -587,7 +549,6 @@ class _MapCreateScreenState extends State<MapCreateScreen>
   @override
   void dispose() {
     _roadNameController.dispose();
-    _fabAnimationController.dispose();
     super.dispose();
   }
 }
