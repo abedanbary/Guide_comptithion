@@ -24,7 +24,6 @@ class GuideCompetitionsScreen extends StatelessWidget {
         stream: FirebaseFirestore.instance
             .collection('competitions')
             .where('createdBy', isEqualTo: currentUser?.email)
-            .orderBy('createdAt', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -33,11 +32,26 @@ class GuideCompetitionsScreen extends StatelessWidget {
             );
           }
 
+          if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}'),
+            );
+          }
+
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return _buildEmptyState(context);
           }
 
+          // Sort competitions locally by createdAt
           final competitions = snapshot.data!.docs;
+          competitions.sort((a, b) {
+            final aData = a.data() as Map<String, dynamic>;
+            final bData = b.data() as Map<String, dynamic>;
+            final aDate = aData['createdAt'] as Timestamp?;
+            final bDate = bData['createdAt'] as Timestamp?;
+            if (aDate == null || bDate == null) return 0;
+            return bDate.compareTo(aDate); // descending order
+          });
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
