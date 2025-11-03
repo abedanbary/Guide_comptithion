@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
-import 'screens/map_screen_add.dart'; // 👈 سننشئها الآن
+import 'screens/map_screen_add.dart';
+import 'screens/StudentHomeScreen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,8 +24,8 @@ class MyApp extends StatelessWidget {
       routes: {
         '/': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/createRoad': (context) => const MapCreateScreen(), // 👨‍🏫 المرشد
-        // 👨‍🎓 الطالب
+        '/createRoad': (context) => const MapCreateScreen(), // Guide
+        '/studentHome': (context) => const StudentHomeScreen(), // Student
       },
     );
   }
