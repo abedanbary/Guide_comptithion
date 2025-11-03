@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'login_screen.dart';
 import 'GuideHomeScreen.dart';
 import 'StudentHomeScreen.dart';
+import '../widgets/app_loading.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -19,13 +20,14 @@ class AuthWrapper extends StatelessWidget {
       builder: (context, snapshot) {
         // Show loading while checking auth state
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
+          return Scaffold(
+            backgroundColor: Colors.white,
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(color: primaryBlue),
-                  SizedBox(height: 20),
+                  AppLoadingIndicator(size: 100),
+                  SizedBox(height: 30),
                   Text(
                     'Loading...',
                     style: TextStyle(
@@ -53,9 +55,10 @@ class AuthWrapper extends StatelessWidget {
               .get(),
           builder: (context, userSnapshot) {
             if (userSnapshot.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
+              return Scaffold(
+                backgroundColor: Colors.white,
                 body: Center(
-                  child: CircularProgressIndicator(color: primaryBlue),
+                  child: AppLoadingIndicator(size: 100),
                 ),
               );
             }

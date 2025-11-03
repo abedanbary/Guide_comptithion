@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:async';
+import '../widgets/app_loading.dart';
 
 class MapViewScreen extends StatefulWidget {
   final String competitionId;
@@ -414,7 +415,7 @@ class _MapViewScreenState extends State<MapViewScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(child: AppLoadingIndicator(size: 60))
           : Stack(
               children: [
                 FlutterMap(

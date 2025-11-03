@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'CompetitionDetailScreen.dart';
 import 'ProfileScreen.dart';
+import '../widgets/app_loading.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -229,7 +230,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(child: AppLoadingIndicator(size: 60));
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -271,7 +272,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(child: AppLoadingIndicator(size: 60));
         }
 
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {

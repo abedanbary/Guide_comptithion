@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'dart:io';
 import '../config/cloudinary_config.dart';
+import '../widgets/app_loading.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -161,8 +162,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: primaryBlue)),
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(child: AppLoadingIndicator(size: 80)),
       );
     }
 
