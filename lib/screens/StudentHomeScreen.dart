@@ -301,6 +301,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       {bool isJoined = false}) {
     final title = data['title'] ?? 'Untitled Competition';
     final roadName = data['roadName'] ?? 'Unknown Route';
+    final roadId = data['roadId'] as String?;
     final createdBy = data['createdBy'] ?? 'Unknown';
     final competitors = (data['competitors'] as List?)?.length ?? 0;
     final scores = data['scores'] as Map<String, dynamic>?;
@@ -334,58 +335,94 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               ),
             );
           },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: accentGold.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.emoji_events,
-                        color: primaryBlue,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: darkBlue,
-                            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Route Image (if available)
+              if (roadId != null)
+                FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('roads')
+                      .doc(roadId)
+                      .get(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData && snapshot.data!.exists) {
+                      final roadData = snapshot.data!.data() as Map<String, dynamic>?;
+                      final imageUrl = roadData?['imageUrl'] as String?;
+
+                      if (imageUrl != null) {
+                        return ClipRRect(
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(16),
+                            topRight: Radius.circular(16),
                           ),
-                          const SizedBox(height: 4),
-                          Row(
+                          child: Image.network(
+                            imageUrl,
+                            height: 140,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        );
+                      }
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: accentGold.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.emoji_events,
+                            color: primaryBlue,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.route, size: 14, color: Colors.grey.shade600),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  roadName,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                              Text(
+                                title,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: darkBlue,
                                 ),
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(Icons.route, size: 14, color: Colors.grey.shade600),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      roadName,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.grey.shade600,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
                     if (isJoined)
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -455,8 +492,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       ),
                   ],
                 ),
-              ],
-            ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),

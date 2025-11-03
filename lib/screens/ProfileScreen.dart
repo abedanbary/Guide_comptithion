@@ -176,12 +176,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: backgroundColor,
       body: CustomScrollView(
         slivers: [
-          // Modern App Bar with gradient
+          // Compact App Bar with gradient
           SliverAppBar(
-            expandedHeight: 180,
+            expandedHeight: 120, // Reduced from 180
             pinned: true,
             elevation: 0,
-            automaticallyImplyLeading: false, // Remove back button
+            automaticallyImplyLeading: false,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(
@@ -191,19 +191,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     end: Alignment.bottomRight,
                   ),
                 ),
-                child: Stack(
-                  children: [
-                    Positioned(
-                      top: 60,
-                      right: -30,
-                      child: Icon(
-                        Icons.person,
-                        size: 200,
-                        color: Colors.white.withOpacity(0.1),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
             backgroundColor: primaryBlue,
@@ -212,7 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           // Content
           SliverToBoxAdapter(
             child: Transform.translate(
-              offset: const Offset(0, -70),
+              offset: const Offset(0, -60), // Adjusted offset
               child: Column(
                 children: [
                   // Profile Avatar with Edit Button
@@ -232,7 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ],
                         ),
                         child: CircleAvatar(
-                          radius: 60,
+                          radius: 50, // Reduced from 60
                           backgroundColor: accentGold,
                           backgroundImage: photoUrl != null
                               ? NetworkImage(photoUrl)
@@ -241,7 +228,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ? Text(
                                   username[0].toUpperCase(),
                                   style: const TextStyle(
-                                    fontSize: 48,
+                                    fontSize: 40, // Reduced from 48
                                     fontWeight: FontWeight.bold,
                                     color: darkBlue,
                                   ),
