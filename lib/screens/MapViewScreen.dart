@@ -42,8 +42,57 @@ class _MapViewScreenState extends State<MapViewScreen> {
   @override
   void initState() {
     super.initState();
+    _loadProgress(); // Load saved progress first
     _loadRoadData();
     _startLocationTracking();
+  }
+
+  /// Load saved progress from Firestore
+  Future<void> _loadProgress() async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+
+      final progressDoc = await FirebaseFirestore.instance
+          .collection('competition_progress')
+          .doc('${widget.competitionId}_${currentUser.uid}')
+          .get();
+
+      if (progressDoc.exists) {
+        final data = progressDoc.data();
+        if (data != null) {
+          setState(() {
+            _totalScore = data['totalScore'] ?? 0;
+            final completedList = List<int>.from(data['completedWaypoints'] ?? []);
+            _completedWaypoints = Set<int>.from(completedList);
+          });
+        }
+      }
+    } catch (e) {
+      // Ignore errors when loading progress, start fresh
+      debugPrint('Error loading progress: $e');
+    }
+  }
+
+  /// Save progress to Firestore
+  Future<void> _saveProgress() async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+
+      await FirebaseFirestore.instance
+          .collection('competition_progress')
+          .doc('${widget.competitionId}_${currentUser.uid}')
+          .set({
+        'competitionId': widget.competitionId,
+        'userId': currentUser.uid,
+        'totalScore': _totalScore,
+        'completedWaypoints': _completedWaypoints.toList(),
+        'lastUpdated': DateTime.now(),
+      });
+    } catch (e) {
+      debugPrint('Error saving progress: $e');
+    }
   }
 
   Future<void> _loadRoadData() async {
@@ -246,6 +295,9 @@ class _MapViewScreenState extends State<MapViewScreen> {
       _showSnackBar('Incorrect answer', isError: true);
     }
 
+    // Save progress after each waypoint
+    _saveProgress();
+
     // Check if all waypoints completed
     if (_completedWaypoints.length == _waypoints.length) {
       _completeCompetition();
@@ -257,12 +309,19 @@ class _MapViewScreenState extends State<MapViewScreen> {
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) return;
 
+      // Save final score
       await FirebaseFirestore.instance
           .collection('competitions')
           .doc(widget.competitionId)
           .update({
         'scores.${currentUser.uid}': _totalScore,
       });
+
+      // Delete progress since competition is completed
+      await FirebaseFirestore.instance
+          .collection('competition_progress')
+          .doc('${widget.competitionId}_${currentUser.uid}')
+          .delete();
 
       if (mounted) {
         showDialog(

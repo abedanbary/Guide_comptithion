@@ -14,6 +14,7 @@ import '../servers/osrm_route_service.dart';
 import '../widgets/road_name_input.dart';
 import '../widgets/save_road_button.dart';
 import '../widgets/point_dialog.dart';
+import '../config/cloudinary_config.dart';
 import 'competition_screen.dart';
 
 class MapCreateScreen extends StatefulWidget {
@@ -142,11 +143,14 @@ class _MapCreateScreenState extends State<MapCreateScreen> {
       // Upload image if selected using Cloudinary
       String? imageUrl;
       if (_selectedImage != null) {
-        // TODO: Replace with your Cloudinary credentials
-        // Get them from: https://console.cloudinary.com/
+        // Check if Cloudinary is configured
+        if (!CloudinaryConfig.isConfigured) {
+          throw Exception(CloudinaryConfig.configurationError);
+        }
+
         final cloudinary = CloudinaryPublic(
-          'YOUR_CLOUD_NAME',  // مثل: 'dxxxxxxx'
-          'YOUR_UPLOAD_PRESET', // اختر اسم مثل: 'route_photos'
+          CloudinaryConfig.cloudName,
+          CloudinaryConfig.routeUploadPreset,
           cache: false,
         );
 

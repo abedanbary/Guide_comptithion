@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'dart:io';
+import '../config/cloudinary_config.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -68,11 +69,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       setState(() => isUploadingImage = true);
 
-      // TODO: Replace with your Cloudinary credentials
-      // Get them from: https://console.cloudinary.com/
+      // Check if Cloudinary is configured
+      if (!CloudinaryConfig.isConfigured) {
+        throw Exception(CloudinaryConfig.configurationError);
+      }
+
       final cloudinary = CloudinaryPublic(
-        'YOUR_CLOUD_NAME',  // مثل: 'dxxxxxxx'
-        'YOUR_UPLOAD_PRESET', // اختر اسم مثل: 'profile_photos'
+        CloudinaryConfig.cloudName,
+        CloudinaryConfig.profileUploadPreset,
         cache: false,
       );
 
