@@ -35,6 +35,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (user.role == 'guide') {
         Navigator.pushReplacementNamed(context, '/createRoad');
+      } else if (user.role == 'student') {
+        Navigator.pushReplacementNamed(context, '/studentHome');
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
