@@ -11,7 +11,16 @@ import '../models/recorded_route.dart';
 import '../config/cloudinary_config.dart';
 
 /// Controller for managing route recording business logic
+/// Singleton pattern to persist across navigation
 class RouteRecordingController extends ChangeNotifier {
+  // Singleton instance
+  static final RouteRecordingController _instance = RouteRecordingController._internal();
+
+  factory RouteRecordingController() {
+    return _instance;
+  }
+
+  RouteRecordingController._internal();
   // Recording state
   bool _isRecording = false;
   bool _isPaused = false;
@@ -120,7 +129,7 @@ class RouteRecordingController extends ChangeNotifier {
     _positionStream = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.bestForNavigation,
-        distanceFilter: 2, // Record every 2 meters for better accuracy
+        distanceFilter: 5, // Record every 5 meters to minimize data
       ),
     ).listen(
       (Position position) {
@@ -152,7 +161,7 @@ class RouteRecordingController extends ChangeNotifier {
             );
 
             // Only add point if moved enough and accuracy is good (< 20m)
-            if (distance >= 1.5 && position.accuracy < 20) {
+            if (distance >= 3.0 && position.accuracy < 20) {
               _totalDistance += distance;
               _recordedPoints.add(newPoint);
             }
@@ -282,6 +291,74 @@ class RouteRecordingController extends ChangeNotifier {
     return response.secureUrl;
   }
 
+  /// Simplify route using Douglas-Peucker algorithm to reduce data
+  List<LatLng> _simplifyRoute(List<LatLng> points, double tolerance) {
+    if (points.length < 3) return points;
+
+    // Find the point with maximum distance from line segment
+    double maxDistance = 0;
+    int maxIndex = 0;
+
+    final start = points.first;
+    final end = points.last;
+
+    for (int i = 1; i < points.length - 1; i++) {
+      final distance = _perpendicularDistance(points[i], start, end);
+      if (distance > maxDistance) {
+        maxDistance = distance;
+        maxIndex = i;
+      }
+    }
+
+    // If max distance is greater than tolerance, recursively simplify
+    if (maxDistance > tolerance) {
+      final leftPoints = _simplifyRoute(points.sublist(0, maxIndex + 1), tolerance);
+      final rightPoints = _simplifyRoute(points.sublist(maxIndex), tolerance);
+
+      return [...leftPoints.sublist(0, leftPoints.length - 1), ...rightPoints];
+    } else {
+      return [start, end];
+    }
+  }
+
+  /// Calculate perpendicular distance from point to line segment
+  double _perpendicularDistance(LatLng point, LatLng lineStart, LatLng lineEnd) {
+    final x = point.latitude;
+    final y = point.longitude;
+    final x1 = lineStart.latitude;
+    final y1 = lineStart.longitude;
+    final x2 = lineEnd.latitude;
+    final y2 = lineEnd.longitude;
+
+    final A = x - x1;
+    final B = y - y1;
+    final C = x2 - x1;
+    final D = y2 - y1;
+
+    final dot = A * C + B * D;
+    final lenSq = C * C + D * D;
+    final param = lenSq != 0 ? dot / lenSq : -1;
+
+    double xx, yy;
+
+    if (param < 0) {
+      xx = x1;
+      yy = y1;
+    } else if (param > 1) {
+      xx = x2;
+      yy = y2;
+    } else {
+      xx = x1 + param * C;
+      yy = y1 + param * D;
+    }
+
+    final dx = x - xx;
+    final dy = y - yy;
+
+    // Return distance in meters
+    return Geolocator.distanceBetween(x, y, xx, yy);
+  }
+
   /// Save the route to Firestore
   Future<bool> saveRoute(String roadName) async {
     if (roadName.isEmpty) {
@@ -313,10 +390,14 @@ class RouteRecordingController extends ChangeNotifier {
         imageUrl = await _uploadImage();
       }
 
-      // Create route object
+      // Simplify route to minimize data (tolerance: 5 meters)
+      // This reduces points while maintaining route accuracy
+      final simplifiedPoints = _simplifyRoute(_recordedPoints, 5.0);
+
+      // Create route object with simplified points
       final route = RecordedRoute(
         roadName: roadName,
-        routePolyline: _recordedPoints,
+        routePolyline: simplifiedPoints,
         totalDistance: _totalDistance,
         totalTime: _totalTime,
         waypoints: _waypoints,

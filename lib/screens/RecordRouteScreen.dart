@@ -37,7 +37,7 @@ class _RecordRouteScreenState extends State<RecordRouteScreen> {
   @override
   void dispose() {
     _controller.removeListener(_onControllerUpdate);
-    _controller.dispose();
+    // Don't dispose controller - it's a singleton that persists
     _roadNameController.dispose();
     super.dispose();
   }
