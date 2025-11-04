@@ -109,7 +109,13 @@ class RouteRecordingController extends ChangeNotifier {
   }
 
   /// Start recording the route
-  void startRecording() async {
+  Future<void> startRecording() async {
+    // Guard: If already recording, don't restart (prevents data loss)
+    if (_isRecording && !_isFinished) {
+      print('Warning: Recording already in progress. Ignoring startRecording() call.');
+      return;
+    }
+
     _isRecording = true;
     _isPaused = false;
     _startTime = DateTime.now();
@@ -147,10 +153,11 @@ class RouteRecordingController extends ChangeNotifier {
     });
 
     // Start GPS tracking with high accuracy
+    // Increased distance filter to reduce GPS noise and create smoother routes
     _positionStream = Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
         accuracy: LocationAccuracy.bestForNavigation,
-        distanceFilter: 5, // Record every 5 meters to minimize data
+        distanceFilter: 10, // Record every 10 meters for smoother routes
       ),
     ).listen(
       (Position position) {
@@ -181,14 +188,15 @@ class RouteRecordingController extends ChangeNotifier {
               newPoint.longitude,
             );
 
-            // Only add point if moved enough and accuracy is good (< 20m)
-            if (distance >= 3.0 && position.accuracy < 20) {
+            // Only add point if moved enough and accuracy is good (< 15m)
+            // Stricter accuracy and distance requirements for smoother routes
+            if (distance >= 5.0 && position.accuracy < 15) {
               _totalDistance += distance;
               _recordedPoints.add(newPoint);
             }
           } else {
             // First point - always add if accuracy is good
-            if (position.accuracy < 20) {
+            if (position.accuracy < 15) {
               _recordedPoints.add(newPoint);
             }
           }
@@ -216,7 +224,7 @@ class RouteRecordingController extends ChangeNotifier {
   }
 
   /// Stop recording
-  bool stopRecording() async {
+  Future<bool> stopRecording() async {
     if (_recordedPoints.length < 2) {
       _errorMessage = 'Record at least a short route before stopping';
       notifyListeners();
@@ -421,9 +429,9 @@ class RouteRecordingController extends ChangeNotifier {
         imageUrl = await _uploadImage();
       }
 
-      // Simplify route to minimize data (tolerance: 5 meters)
-      // This reduces points while maintaining route accuracy
-      final simplifiedPoints = _simplifyRoute(_recordedPoints, 5.0);
+      // Simplify route to minimize data and smooth out GPS noise (tolerance: 10 meters)
+      // Higher tolerance creates smoother, more beautiful routes by removing small zigzags
+      final simplifiedPoints = _simplifyRoute(_recordedPoints, 10.0);
 
       // Create route object with simplified points
       final route = RecordedRoute(
@@ -452,7 +460,7 @@ class RouteRecordingController extends ChangeNotifier {
   }
 
   /// Reset all data
-  void reset() async {
+  Future<void> reset() async {
     _isRecording = false;
     _isPaused = false;
     _isFinished = false;

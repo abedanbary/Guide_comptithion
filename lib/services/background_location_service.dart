@@ -115,13 +115,6 @@ class BackgroundLocationService {
 
     // Initial notification
     await _showNotification(distance: 0, time: 0, pointsCount: 0);
-
-    // Keep service alive with periodic updates
-    Timer.periodic(const Duration(seconds: 1), (timer) async {
-      if (!await service.isRunning()) {
-        timer.cancel();
-      }
-    });
   }
 
   /// iOS background handler
