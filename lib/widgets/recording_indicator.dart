@@ -20,12 +20,13 @@ class RecordingIndicator extends StatelessWidget {
 
         return GestureDetector(
           onTap: () {
-            // Navigate back to recording screen
-            Navigator.push(
+            // Navigate back to recording screen (remove current route first to avoid duplicates)
+            Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
                 builder: (context) => const RecordRouteScreen(),
               ),
+              (route) => route.isFirst, // Keep only the first route (main screen)
             );
           },
           child: Container(

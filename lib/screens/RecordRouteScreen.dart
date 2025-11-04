@@ -15,7 +15,7 @@ class RecordRouteScreen extends StatefulWidget {
   State<RecordRouteScreen> createState() => _RecordRouteScreenState();
 }
 
-class _RecordRouteScreenState extends State<RecordRouteScreen> {
+class _RecordRouteScreenState extends State<RecordRouteScreen> with WidgetsBindingObserver {
   final MapController _mapController = MapController();
   final TextEditingController _roadNameController = TextEditingController();
   final RouteRecordingController _controller = RouteRecordingController();
@@ -30,16 +30,34 @@ class _RecordRouteScreenState extends State<RecordRouteScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _initializeLocation();
     _controller.addListener(_onControllerUpdate);
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.removeListener(_onControllerUpdate);
     // Don't dispose controller - it's a singleton that persists
     _roadNameController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // When app resumes from background, just continue - don't restart
+    if (state == AppLifecycleState.resumed) {
+      // Update map position if currently recording
+      if (_controller.isRecording && _controller.currentLocation != null) {
+        _mapController.move(
+          _controller.currentLocation!,
+          _mapController.camera.zoom,
+        );
+      }
+    }
   }
 
   /// Initialize location on startup
@@ -141,6 +159,13 @@ class _RecordRouteScreenState extends State<RecordRouteScreen> {
     final success = await _controller.saveRoute(_roadNameController.text);
     if (success) {
       _showSnackBar('Route saved successfully!', isError: false);
+
+      // Reset controller to clear all data
+      await _controller.reset();
+
+      // Clear road name field
+      _roadNameController.clear();
+
       if (mounted) {
         Navigator.pop(context);
       }
@@ -233,7 +258,7 @@ class _RecordRouteScreenState extends State<RecordRouteScreen> {
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
-                        // Accuracy circle
+                        // Accuracy circle with stricter thresholds for smooth routes
                         if (_controller.currentAccuracy > 0)
                           Container(
                             width: 60,
@@ -242,13 +267,13 @@ class _RecordRouteScreenState extends State<RecordRouteScreen> {
                               shape: BoxShape.circle,
                               color: _controller.currentAccuracy < 10
                                   ? Colors.green.withOpacity(0.2)
-                                  : _controller.currentAccuracy < 20
+                                  : _controller.currentAccuracy < 15
                                       ? Colors.orange.withOpacity(0.2)
                                       : Colors.red.withOpacity(0.2),
                               border: Border.all(
                                 color: _controller.currentAccuracy < 10
                                     ? Colors.green
-                                    : _controller.currentAccuracy < 20
+                                    : _controller.currentAccuracy < 15
                                         ? Colors.orange
                                         : Colors.red,
                                 width: 2,
@@ -355,7 +380,7 @@ class _RecordRouteScreenState extends State<RecordRouteScreen> {
                   size: 16,
                   color: _controller.currentAccuracy < 10
                       ? Colors.green
-                      : _controller.currentAccuracy < 20
+                      : _controller.currentAccuracy < 15
                           ? Colors.orange
                           : Colors.red,
                 ),
@@ -366,7 +391,7 @@ class _RecordRouteScreenState extends State<RecordRouteScreen> {
                     fontSize: 12,
                     color: _controller.currentAccuracy < 10
                         ? Colors.green.shade700
-                        : _controller.currentAccuracy < 20
+                        : _controller.currentAccuracy < 15
                             ? Colors.orange.shade700
                             : Colors.red.shade700,
                     fontWeight: FontWeight.w600,
