@@ -78,8 +78,8 @@ class _RecordRouteScreenState extends State<RecordRouteScreen> {
   }
 
   /// Stop recording handler
-  void _handleStopRecording() {
-    final success = _controller.stopRecording();
+  Future<void> _handleStopRecording() async {
+    final success = await _controller.stopRecording();
     if (success) {
       _showSnackBar('Recording stopped! Add waypoints and details',
           isError: false);

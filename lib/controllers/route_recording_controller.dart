@@ -109,7 +109,7 @@ class RouteRecordingController extends ChangeNotifier {
   }
 
   /// Start recording the route
-  void startRecording() async {
+  Future<void> startRecording() async {
     _isRecording = true;
     _isPaused = false;
     _startTime = DateTime.now();
@@ -216,7 +216,7 @@ class RouteRecordingController extends ChangeNotifier {
   }
 
   /// Stop recording
-  bool stopRecording() async {
+  Future<bool> stopRecording() async {
     if (_recordedPoints.length < 2) {
       _errorMessage = 'Record at least a short route before stopping';
       notifyListeners();
@@ -452,7 +452,7 @@ class RouteRecordingController extends ChangeNotifier {
   }
 
   /// Reset all data
-  void reset() async {
+  Future<void> reset() async {
     _isRecording = false;
     _isPaused = false;
     _isFinished = false;
