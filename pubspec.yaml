@@ -23,6 +23,9 @@ dependencies:
   geolocator: ^11.0.0
   image_picker: ^1.0.7
   cloudinary_public: ^0.21.0
+  flutter_background_service: ^5.0.5
+  flutter_local_notifications: ^17.0.0
+  permission_handler: ^11.3.0
 
 dev_dependencies:
   flutter_test:

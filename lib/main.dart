@@ -6,10 +6,15 @@ import 'screens/register_screen.dart';
 import 'screens/map_screen_add.dart';
 import 'screens/StudentHomeScreen.dart';
 import 'screens/GuideHomeScreen.dart';
+import 'services/background_location_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // Initialize background location service
+  await BackgroundLocationService.initialize();
+
   runApp(const MyApp());
 }
 

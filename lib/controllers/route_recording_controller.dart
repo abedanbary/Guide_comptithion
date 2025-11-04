@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import '../models/waypoint.dart';
 import '../models/recorded_route.dart';
 import '../config/cloudinary_config.dart';
+import '../services/background_location_service.dart';
 
 /// Controller for managing route recording business logic
 /// Singleton pattern to persist across navigation
@@ -47,6 +48,7 @@ class RouteRecordingController extends ChangeNotifier {
   // Streams
   StreamSubscription<Position>? _positionStream;
   Timer? _timer;
+  Timer? _notificationUpdateTimer;
 
   // Getters
   bool get isRecording => _isRecording;
@@ -107,7 +109,7 @@ class RouteRecordingController extends ChangeNotifier {
   }
 
   /// Start recording the route
-  void startRecording() {
+  void startRecording() async {
     _isRecording = true;
     _isPaused = false;
     _startTime = DateTime.now();
@@ -117,11 +119,30 @@ class RouteRecordingController extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    // Start background service for recording outside app
+    try {
+      await BackgroundLocationService.start();
+    } catch (e) {
+      _errorMessage = 'Failed to start background service: $e';
+    }
+
     // Start timer for elapsed time
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_isRecording && !_isPaused) {
         _totalTime++;
         notifyListeners();
+      }
+    });
+
+    // Update notification every 3 seconds
+    _notificationUpdateTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (_isRecording) {
+        BackgroundLocationService.updateNotification(
+          distance: _totalDistance,
+          time: _totalTime,
+          pointsCount: _recordedPoints.length,
+          isPaused: _isPaused,
+        );
       }
     });
 
@@ -195,7 +216,7 @@ class RouteRecordingController extends ChangeNotifier {
   }
 
   /// Stop recording
-  bool stopRecording() {
+  bool stopRecording() async {
     if (_recordedPoints.length < 2) {
       _errorMessage = 'Record at least a short route before stopping';
       notifyListeners();
@@ -207,6 +228,16 @@ class RouteRecordingController extends ChangeNotifier {
     _isFinished = true;
     _positionStream?.cancel();
     _timer?.cancel();
+    _notificationUpdateTimer?.cancel();
+
+    // Stop background service and clear notification
+    try {
+      await BackgroundLocationService.stop();
+      await BackgroundLocationService.cancelNotification();
+    } catch (e) {
+      _errorMessage = 'Failed to stop background service: $e';
+    }
+
     notifyListeners();
     return true;
   }
@@ -421,7 +452,7 @@ class RouteRecordingController extends ChangeNotifier {
   }
 
   /// Reset all data
-  void reset() {
+  void reset() async {
     _isRecording = false;
     _isPaused = false;
     _isFinished = false;
@@ -439,6 +470,16 @@ class RouteRecordingController extends ChangeNotifier {
     _errorMessage = null;
     _positionStream?.cancel();
     _timer?.cancel();
+    _notificationUpdateTimer?.cancel();
+
+    // Stop background service
+    try {
+      await BackgroundLocationService.stop();
+      await BackgroundLocationService.cancelNotification();
+    } catch (e) {
+      // Ignore errors on reset
+    }
+
     notifyListeners();
   }
 
@@ -446,6 +487,7 @@ class RouteRecordingController extends ChangeNotifier {
   void dispose() {
     _positionStream?.cancel();
     _timer?.cancel();
+    _notificationUpdateTimer?.cancel();
     super.dispose();
   }
 }
