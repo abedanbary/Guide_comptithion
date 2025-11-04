@@ -6,6 +6,7 @@ import 'RecordRouteScreen.dart';
 import 'GuideRoadsScreen.dart';
 import 'GuideCompetitionsScreen.dart';
 import 'ProfileScreen.dart';
+import '../widgets/recording_indicator.dart';
 
 class GuideHomeScreen extends StatefulWidget {
   const GuideHomeScreen({super.key});
@@ -60,6 +61,8 @@ class _GuideHomeScreenState extends State<GuideHomeScreen> {
         backgroundColor: primaryBlue,
         elevation: 0,
         actions: [
+          const RecordingIndicator(),
+          const SizedBox(width: 8),
           IconButton(
             icon: const Icon(Icons.logout_rounded),
             tooltip: 'Logout',

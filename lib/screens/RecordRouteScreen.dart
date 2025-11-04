@@ -37,7 +37,7 @@ class _RecordRouteScreenState extends State<RecordRouteScreen> {
   @override
   void dispose() {
     _controller.removeListener(_onControllerUpdate);
-    _controller.dispose();
+    // Don't dispose controller - it's a singleton that persists
     _roadNameController.dispose();
     super.dispose();
   }
@@ -88,7 +88,26 @@ class _RecordRouteScreenState extends State<RecordRouteScreen> {
     }
   }
 
-  /// Add waypoint handler
+  /// Add waypoint during recording (at current location)
+  void _handleAddWaypointDuringRecording() {
+    if (!_controller.canAddWaypoint) {
+      _showSnackBar('Waiting for GPS location...', isError: true);
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) => _QuickWaypointDialog(
+        currentLocation: _controller.currentLocation!,
+        onAdd: (waypoint) {
+          _controller.addWaypointAtCurrentLocation(waypoint);
+          _showSnackBar('Waypoint added at current location!', isError: false);
+        },
+      ),
+    );
+  }
+
+  /// Add waypoint handler (after recording, select from points)
   void _handleAddWaypoint() {
     if (_controller.recordedPoints.isEmpty) {
       _showSnackBar('No route recorded yet', isError: true);
@@ -160,6 +179,20 @@ class _RecordRouteScreenState extends State<RecordRouteScreen> {
               : _buildRecordingView();
         },
       ),
+      floatingActionButton: _controller.isRecording && !_controller.isFinished
+          ? FloatingActionButton.extended(
+              onPressed: _handleAddWaypointDuringRecording,
+              backgroundColor: accentGold,
+              icon: const Icon(Icons.add_location_alt, color: darkBlue),
+              label: const Text(
+                'Add Waypoint',
+                style: TextStyle(
+                  color: darkBlue,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            )
+          : null,
     );
   }
 
@@ -195,26 +228,59 @@ class _RecordRouteScreenState extends State<RecordRouteScreen> {
                 markers: [
                   Marker(
                     point: _controller.currentLocation!,
-                    width: 50,
-                    height: 50,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade700,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 3),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.blue.withOpacity(0.5),
-                            blurRadius: 10,
-                            spreadRadius: 2,
+                    width: 60,
+                    height: 60,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Accuracy circle
+                        if (_controller.currentAccuracy > 0)
+                          Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: _controller.currentAccuracy < 10
+                                  ? Colors.green.withOpacity(0.2)
+                                  : _controller.currentAccuracy < 20
+                                      ? Colors.orange.withOpacity(0.2)
+                                      : Colors.red.withOpacity(0.2),
+                              border: Border.all(
+                                color: _controller.currentAccuracy < 10
+                                    ? Colors.green
+                                    : _controller.currentAccuracy < 20
+                                        ? Colors.orange
+                                        : Colors.red,
+                                width: 2,
+                              ),
+                            ),
                           ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.navigation,
-                        color: Colors.white,
-                        size: 24,
-                      ),
+                        // Direction indicator
+                        Transform.rotate(
+                          angle: _controller.currentBearing * 3.14159 / 180,
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade700,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 3),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.blue.withOpacity(0.5),
+                                  blurRadius: 10,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.navigation,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -255,24 +321,60 @@ class _RecordRouteScreenState extends State<RecordRouteScreen> {
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: Column(
         children: [
-          _buildStat(
-            Icons.straighten,
-            RouteHelpers.formatDistance(_controller.totalDistance / 1000),
-            'Distance',
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStat(
+                Icons.straighten,
+                RouteHelpers.formatDistance(_controller.totalDistance / 1000),
+                'Distance',
+              ),
+              _buildStat(
+                Icons.access_time,
+                RouteHelpers.formatTime(_controller.totalTime ~/ 60),
+                'Time',
+              ),
+              _buildStat(
+                Icons.my_location,
+                '${_controller.recordedPoints.length}',
+                'Points',
+              ),
+            ],
           ),
-          _buildStat(
-            Icons.access_time,
-            RouteHelpers.formatTime(_controller.totalTime ~/ 60),
-            'Time',
-          ),
-          _buildStat(
-            Icons.my_location,
-            '${_controller.recordedPoints.length}',
-            'Points',
-          ),
+          if (_controller.currentAccuracy > 0) ...[
+            const SizedBox(height: 8),
+            const Divider(height: 1),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.gps_fixed,
+                  size: 16,
+                  color: _controller.currentAccuracy < 10
+                      ? Colors.green
+                      : _controller.currentAccuracy < 20
+                          ? Colors.orange
+                          : Colors.red,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'GPS Accuracy: ${_controller.currentAccuracy.toStringAsFixed(1)}m',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: _controller.currentAccuracy < 10
+                        ? Colors.green.shade700
+                        : _controller.currentAccuracy < 20
+                            ? Colors.orange.shade700
+                            : Colors.red.shade700,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -754,6 +856,199 @@ class _RecordRouteScreenState extends State<RecordRouteScreen> {
           color: Colors.black.withOpacity(0.06),
           blurRadius: 10,
           offset: const Offset(0, 2),
+        ),
+      ],
+    );
+  }
+}
+
+/// Quick dialog for adding waypoint at current location during recording
+class _QuickWaypointDialog extends StatefulWidget {
+  final LatLng currentLocation;
+  final Function(Waypoint) onAdd;
+
+  const _QuickWaypointDialog({
+    required this.currentLocation,
+    required this.onAdd,
+  });
+
+  @override
+  State<_QuickWaypointDialog> createState() => _QuickWaypointDialogState();
+}
+
+class _QuickWaypointDialogState extends State<_QuickWaypointDialog> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _questionController = TextEditingController();
+  final List<TextEditingController> _optionControllers = [
+    TextEditingController(),
+    TextEditingController(),
+    TextEditingController(),
+    TextEditingController(),
+  ];
+  int _correctIndex = 0;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _questionController.dispose();
+    for (var controller in _optionControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  void _handleAdd() {
+    // Validate inputs
+    if (_nameController.text.isEmpty || _questionController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in name and question'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final options = _optionControllers.map((c) => c.text).toList();
+    if (options.any((o) => o.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all options'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Create waypoint at current location
+    final waypoint = Waypoint(
+      name: _nameController.text,
+      location: widget.currentLocation,
+      question: _questionController.text,
+      options: options,
+      correctIndex: _correctIndex,
+    );
+
+    widget.onAdd(waypoint);
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      title: Row(
+        children: [
+          const Icon(Icons.add_location_alt, color: Color(0xFF3D5A80)),
+          const SizedBox(width: 8),
+          const Text('Add Waypoint Here'),
+        ],
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Location info
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.location_on, color: Colors.blue.shade700, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Current location: ${widget.currentLocation.latitude.toStringAsFixed(5)}, ${widget.currentLocation.longitude.toStringAsFixed(5)}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.blue.shade900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Waypoint name
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Waypoint Name',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.label),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Quiz question
+            TextField(
+              controller: _questionController,
+              decoration: const InputDecoration(
+                labelText: 'Quiz Question',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.quiz),
+              ),
+              maxLines: 2,
+            ),
+            const SizedBox(height: 12),
+
+            // Options
+            const Text(
+              'Options (select correct answer):',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            ...List.generate(4, (index) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Radio<int>(
+                      value: index,
+                      groupValue: _correctIndex,
+                      onChanged: (value) {
+                        setState(() => _correctIndex = value!);
+                      },
+                    ),
+                    Expanded(
+                      child: TextField(
+                        controller: _optionControllers[index],
+                        decoration: InputDecoration(
+                          labelText: 'Option ${index + 1}',
+                          border: const OutlineInputBorder(),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton.icon(
+          onPressed: _handleAdd,
+          icon: const Icon(Icons.check),
+          label: const Text('Add Waypoint'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF3D5A80),
+            foregroundColor: Colors.white,
+          ),
         ),
       ],
     );
