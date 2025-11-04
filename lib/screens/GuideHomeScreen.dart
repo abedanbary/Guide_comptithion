@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'map_screen_add.dart';
+import 'RecordRouteScreen.dart';
 import 'GuideRoadsScreen.dart';
 import 'GuideCompetitionsScreen.dart';
 import 'ProfileScreen.dart';
@@ -73,12 +74,7 @@ class _GuideHomeScreenState extends State<GuideHomeScreen> {
       ),
       body: _screens[_currentIndex],
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const MapCreateScreen()),
-          );
-        },
+        onPressed: () => _showCreateRouteOptions(context),
         backgroundColor: accentGold,
         foregroundColor: darkBlue,
         icon: const Icon(Icons.add_location_alt_rounded, size: 24),
@@ -120,6 +116,99 @@ class _GuideHomeScreenState extends State<GuideHomeScreen> {
               icon: Icon(Icons.person),
               label: 'Profile',
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCreateRouteOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Create New Route',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: darkBlue,
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Draw on Map option
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: primaryBlue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.map, color: primaryBlue, size: 28),
+              ),
+              title: const Text(
+                'Draw on Map',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: const Text('Tap points on the map to create route'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const MapCreateScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 8),
+
+            // Record while walking option
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(Icons.directions_walk, color: Colors.green.shade700, size: 28),
+              ),
+              title: const Text(
+                'Record While Walking',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              subtitle: const Text('Walk the route and record with GPS'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RecordRouteScreen()),
+                );
+              },
+            ),
+            const SizedBox(height: 10),
           ],
         ),
       ),
