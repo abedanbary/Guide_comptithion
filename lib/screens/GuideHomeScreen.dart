@@ -7,6 +7,7 @@ import 'GuideRoadsScreen.dart';
 import 'GuideCompetitionsScreen.dart';
 import 'ProfileScreen.dart';
 import '../widgets/recording_indicator.dart';
+import '../widgets/sync_status_indicator.dart';
 
 class GuideHomeScreen extends StatefulWidget {
   const GuideHomeScreen({super.key});
@@ -75,7 +76,12 @@ class _GuideHomeScreenState extends State<GuideHomeScreen> {
           ),
         ],
       ),
-      body: _screens[_currentIndex],
+      body: Column(
+        children: [
+          const SyncStatusIndicator(),
+          Expanded(child: _screens[_currentIndex]),
+        ],
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCreateRouteOptions(context),
         backgroundColor: accentGold,

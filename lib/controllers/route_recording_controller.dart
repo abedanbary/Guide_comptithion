@@ -6,10 +6,13 @@ import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/waypoint.dart';
 import '../models/recorded_route.dart';
 import '../config/cloudinary_config.dart';
 import '../services/background_location_service.dart';
+import '../services/local_storage_service.dart';
+import '../services/sync_service.dart';
 
 /// Controller for managing route recording business logic
 /// Singleton pattern to persist across navigation
@@ -423,10 +426,24 @@ class RouteRecordingController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Upload image if selected
+      // Get current user
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        _errorMessage = 'User not authenticated';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // Upload image if selected (only if online, otherwise save without image)
       String? imageUrl;
       if (_selectedImage != null) {
-        imageUrl = await _uploadImage();
+        try {
+          imageUrl = await _uploadImage();
+        } catch (e) {
+          print('Image upload failed (offline?): $e');
+          // Continue without image - will try to upload later if needed
+        }
       }
 
       // Simplify route to minimize data and smooth out GPS noise (tolerance: 10 meters)
@@ -436,17 +453,29 @@ class RouteRecordingController extends ChangeNotifier {
       // Create route object with simplified points
       final route = RecordedRoute(
         roadName: roadName,
-        routePolyline: simplifiedPoints,
+        recordedPoints: simplifiedPoints,
         totalDistance: _totalDistance,
         totalTime: _totalTime,
         waypoints: _waypoints,
         imageUrl: imageUrl,
+        createdBy: user.uid,
+        isSynced: false,
       );
 
-      // Save to Firestore
-      await FirebaseFirestore.instance
-          .collection('roads')
-          .add(route.toMap());
+      // Save to local storage FIRST (offline-first approach)
+      final localId = await LocalStorageService.saveRouteLocally(route);
+
+      print('Route saved locally with ID: $localId');
+
+      // Try to sync immediately if online
+      final syncService = SyncService();
+      syncService.syncPendingRoutes().then((result) {
+        if (result.success) {
+          print('Route synced successfully: ${result.message}');
+        } else {
+          print('Route will sync later: ${result.message}');
+        }
+      });
 
       _isLoading = false;
       notifyListeners();

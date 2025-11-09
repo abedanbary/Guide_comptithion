@@ -7,13 +7,21 @@ import 'screens/map_screen_add.dart';
 import 'screens/StudentHomeScreen.dart';
 import 'screens/GuideHomeScreen.dart';
 import 'services/background_location_service.dart';
+import 'services/local_storage_service.dart';
+import 'services/sync_service.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
+  // Initialize local storage for offline-first functionality
+  await LocalStorageService.initialize();
+
   // Initialize background location service
   await BackgroundLocationService.initialize();
+
+  // Initialize sync service for automatic cloud syncing
+  await SyncService().initialize();
 
   runApp(const MyApp());
 }

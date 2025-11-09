@@ -3,23 +3,34 @@ import 'waypoint.dart';
 
 /// Model representing a recorded route with all its data
 class RecordedRoute {
+  final String? id; // Firestore document ID or local ID
   final String roadName;
   final List<LatLng> routePolyline;
   final double totalDistance; // in meters
   final int totalTime; // in seconds
   final List<Waypoint> waypoints;
   final String? imageUrl;
+  final String createdBy; // User ID who created the route
   final DateTime createdAt;
+  final bool isSynced; // Whether route is synced to Firestore
 
   RecordedRoute({
+    this.id,
     required this.roadName,
-    required this.routePolyline,
+    List<LatLng>? routePolyline,
+    List<LatLng>? recordedPoints, // Alternative name for compatibility
     required this.totalDistance,
     required this.totalTime,
     required this.waypoints,
     this.imageUrl,
+    required this.createdBy,
     DateTime? createdAt,
-  }) : createdAt = createdAt ?? DateTime.now();
+    this.isSynced = false,
+  })  : routePolyline = routePolyline ?? recordedPoints ?? [],
+        createdAt = createdAt ?? DateTime.now();
+
+  /// Alias for routePolyline (for compatibility)
+  List<LatLng> get recordedPoints => routePolyline;
 
   /// Convert route to map for Firestore
   Map<String, dynamic> toMap() {
@@ -37,14 +48,16 @@ class RecordedRoute {
         .toList();
 
     return {
-      'id': createdAt.millisecondsSinceEpoch,
+      'id': id ?? createdAt.millisecondsSinceEpoch,
       'roadName': roadName,
       'createdAt': createdAt,
+      'createdBy': createdBy,
       'points': waypointsMap,
       'routePolyline': routePolylineMap,
       'recordedDistance': totalDistance,
       'recordedTime': totalTime,
       if (imageUrl != null) 'imageUrl': imageUrl,
+      'isSynced': isSynced,
     };
   }
 
